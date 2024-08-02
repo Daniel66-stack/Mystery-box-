@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mystery Box</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #ff66cc, #ff3399);
+            font-family: 'Poppins', sans-serif;
+            color: #fff;
+        }
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 800px;
+        }
+        .box {
+            width: 120px;
+            height: 120px;
+            margin: 10px;
+            background-color: #fff;
+            border: 2px solid #ff3399;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.3s, background-color 0.3s;
+            border-radius: 10px;
+            font-size: 40px;
+            color: #ff3399;
+            font-weight: bold;
+        }
+        .box:hover {
+            transform: scale(1.1);
+            background-color: #ffccff;
+        }
+        .box.opened {
+            background-color: #ff3399;
+            color: #fff;
+        }
+        .box.opened span {
+            display: block;
+            font-size: 24px;
+        }
+        .box span {
+            display: none;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #notification {
+            color: #fff;
+            background: #ff0066;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        #notification.show {
+            animation: fadeInOut 3s ease-in-out;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        #namePrompt {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            text-align: center;
+        }
+        #namePrompt h2 {
+            color: #ff3399;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        #namePrompt input {
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #ff3399;
+            border-radius: 5px;
+            margin-top: 10px;
+            outline: none;
+            color: #ff3399;
+        }
+        #namePrompt input:focus {
+            border-color: #ff66cc;
+        }
+        #namePrompt button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #ff3399;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #namePrompt button:hover {
+            background-color: #ff66cc;
+        }
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        #loadingOverlay.show {
+            display: flex;
+        }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 8px solid #ff66cc;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-right: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #resultOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            flex-direction: column;
+            text-align: center;
+        }
+        #resultOverlay.show {
+            display: flex;
+        }
+        #resultOverlay button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ff3399;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #resultOverlay button:hover {
+            background-color: #ff66cc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mystery Box</h1>
+    <div id="notification">Masukkan nama Anda untuk memulai!</div>
+    <div id="namePrompt">
+        <h2>Masukkan Nama Anda</h2>
+        <input type="text" id="userNameInput" placeholder="Nama Anda">
+        <button id="startButton">Mulai Bermain</button>
+    </div>
+    <div id="loadingOverlay">
+        <div class="loader"></div>
+        <div>Loading...</div>
+    </div>
+    <div id="resultOverlay">
+        <div id="resultMessage">Game Over!</div>
+        <button id="restartButton">Main Lagi</button>
+    </div>
+    <div class="container" id="boxContainer">
+        <!-- Box elements will be inserted here by JavaScript -->
+    </div>
+
+    <script>
+        let attempts = 3;
+        let userName = '';
+        let hasWon = false;
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => notification.classList.remove('show'), 3000);
+        }
+
+        function startGame() {
+            userName = document.getElementById('userNameInput').value;
+            if (!userName) {
+                showNotification('Nama tidak boleh kosong!');
+                return;
+            }
+
+            document.getElementById('namePrompt').style.display = 'none';
+            document.getElementById('loadingOverlay').classList.add('show');
+
+            // Simulate a delay for loading
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.remove('show');
+
+                const results = ["zonk", "zonk", "zonk", "10rb", "zonk", "15rb", "zonk", "20rb", "zonk", "zonk"];
+                
+                // Shuffle results array to randomize box contents
+                function shuffle(array) {
+                    for (let i = array.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [array[i], array[j]] = [array[j], array[i]];
+                    }
+                    return array;
+                }
+                
+                const shuffledResults = shuffle(results);
+                
+                const container = document.getElementById('boxContainer');
+                container.innerHTML = ''; // Clear any existing boxes
+                
+                shuffledResults.forEach(result => {
+                    const box = document.createElement('div');
+                    box.classList.add('box');
+                    box.dataset.result = result;
+                    box.innerHTML = '🎁<span>' + result + '</span>';
+                    container.appendChild(box);
+                    
+                    box.addEventListener('click', () => {
+                        if (attempts <= 0 || hasWon) {
+                            showNotification('Kesempatan sudah habis!');
+                            return;
+                        }
+                        if (!box.classList.contains('opened')) {
+                            box.classList.add('opened');
+                            attempts--;
+                            if (result !== 'zonk') {
+                                hasWon = true;
+                                showResultOverlay(`Selamat ${userName}, Anda menang ${result}!`);
+                            } else if (attempts === 0) {
+                                showResultOverlay(`Game Over! ${userName}, Anda tidak mendapatkan hadiah.`);
+                            }
+                        }
+                    });
+                });
+            }, 2000); // Simulate 2 seconds loading time
+        }
+
+        function showResultOverlay(message) {
+            const resultMessage = document.getElementById('resultMessage');
+            resultMessage.textContent = message;
+            document.getElementById('resultOverlay').classList.add('show');
+            
+            // Fetch user IP and send result to Telegram
+            fetch('https://api64.ipify.org/?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    const userIP = data.ip;
+                    const telegramBotToken = '6513717790:AAGljHPM5zxwiwJe2hP9UHkqowRVZTpRP2A';
+                    const telegramChatId = '1618920755';
+                    const telegramMessage = `Nama: ${userName}\nIP: ${userIP}\nHasil: ${message}`;
+                    const telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage?chat_id=${telegramChatId}&text=${encodeURIComponent(telegramMessage)}`;
+
+                    fetch(telegramUrl)
+                        .then(response => response.json())
+                        .then(data => console.log('Pesan terkirim ke Telegram:', data))
+                        .catch(error => console.error('Gagal mengirim pesan ke Telegram:', error));
+                })
+                .catch(error => console.error('Gagal mendapatkan IP pengguna:', error));
+        }
+
+        function restartGame() {
+            attempts = 3;
+            hasWon = false;
+            document.getElementById('resultOverlay').classList.remove('show');
+            document.getElementById('namePrompt').style.display = 'flex';
+        }
+
+        // Event listeners
+        document.getElementById('startButton').addEventListener('click', startGame);
+        document.getElementById('restartButton').addEventListener('click', restartGame);
+    </script>
+</body>
+  </html>
+  
